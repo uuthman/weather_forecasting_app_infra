@@ -3,12 +3,12 @@ provider "aws" {
 }
 
 module "vpc" {
-  source = "modulespc"
+  source = "./modules/vpc"
   vpc_cidr = var.vpc_cidr
 }
 
 module "subnets" {
-  source = "modulesubnets"
+  source = "./modules/subnets"
   subnet_2_availability_zone = var.subnet_2_availability_zone
   subnet_2_cidr_block = var.subnet_2_cidr_block
   subnet_availability_zone = var.subnet_availability_zone
@@ -17,37 +17,37 @@ module "subnets" {
 }
 
 module "internet_gateway" {
-  source = "modulesnternet_gateway"
+  source = "./modules/internet_gateway"
   vpc_id = module.vpc.vpc_id
 }
 
 module "route_table" {
-  source = "modulesoute_table"
+  source = "./modules/route_table"
   internet_gateway_id = module.internet_gateway.ig_id
   vpc_id = module.vpc.vpc_id
 }
 
 module "route_table_associations" {
-  source = "modulesoute_table_associations"
+  source = "./modules/route_table_associations"
   route_table_id = module.route_table.route_table_id
   subnet_2_id = module.subnets.subnet_2_id
   subnet_id = module.subnets.subnet_id
 }
 
 module "security_group" {
-  source = "modulesecurity_group"
+  source = "./modules/security_group"
   vpc_id = module.vpc.vpc_id
 }
 
 module "application_load_balancer" {
-  source = "modulesoad_balancer"
+  source = "./modules/load_balancer"
   subnet_2_id = module.subnets.subnet_2_id
   subnet_id = module.subnets.subnet_id
   vpc_security_group = module.security_group.vpc_sg_id
 }
 
 module "target_group" {
-  source = "modulesarget_group"
+  source = "./modules/target_group"
   target_group_port = var.target_group_port
   target_group_protocol = var.target_group_protocol
   vpc_id = module.vpc.vpc_id
@@ -55,7 +55,7 @@ module "target_group" {
 }
 
 module "load_balancer_listener" {
-  source = "modulesoad_balancer_listener"
+  source = "./modules/load_balancer_listener"
   alb_id = module.application_load_balancer.ecs_alb_arn
   listener_port = var.listener_port
   listener_protocol = var.listener_protocol
@@ -63,27 +63,27 @@ module "load_balancer_listener" {
 }
 
 module "ecr_registry" {
-  source = "modulescr_registry"
+  source = "./modules/ecr_registry"
   ecr_name = var.ecr_name
 }
 
 
 module "ecs_cluster" {
-  source = "modulescs_cluster"
+  source = "./modules/ecs_cluster"
 }
 
 module "iam_role" {
-  source = "modulesam_role"
+  source = "./modules/iam_role"
 }
 
 module "policy" {
-  source = "modulesolicy"
+  source = "./modules/policy"
   policy_arn = var.policy_arn
   role_name = module.iam_role.task_execution_role_name
 }
 
 module "ecs_task_definition" {
-  source = "modulescs_task_definition"
+  source = "./modules/ecs_task_definition"
   container_name = var.container_name
   container_port = var.container_port
   container_protocol = var.container_protocol
@@ -98,7 +98,7 @@ module "ecs_task_definition" {
 }
 
 module "ecs_service" {
-  source = "modulescs_service"
+  source = "./modules/ecs_service"
   cluster_id = module.ecs_cluster.cluster_id
   container_name = var.container_name
   container_port = var.container_port
@@ -113,7 +113,7 @@ module "ecs_service" {
 
 
 module "auto_scaling" {
-  source = "modulesuto_scaling"
+  source = "./modules/auto_scaling"
   auto_scaling_name = var.auto_scaling_name
   cluster_name = module.ecs_cluster.cluster_name
   max_capacity = var.max_capacity
@@ -123,7 +123,7 @@ module "auto_scaling" {
 }
 
 module "auto_scaling_policies" {
-  source = "modulesuto_scaling_policies"
+  source = "./modules/auto_scaling_policies"
   adjustment_type = var.adjustment_type
   cooldown = var.cooldown
   metric_aggregation_type = var.metric_aggregation_type
@@ -133,7 +133,7 @@ module "auto_scaling_policies" {
 }
 
 module "cloudwatch" {
-  source = "modulesloudwatch"
+  source = "./modules/cloudwatch"
   cluster_name = module.ecs_cluster.cluster_name
   high_comparison_operator = var.high_comparison_operator
   high_cpu_arn = module.auto_scaling_policies.scale_out_arn
@@ -150,6 +150,6 @@ module "cloudwatch" {
 }
 
 module "log" {
-  source = "modulesogs"
+  source = "./modules/logs"
   name = "ecs/${var.container_name}"
 }
