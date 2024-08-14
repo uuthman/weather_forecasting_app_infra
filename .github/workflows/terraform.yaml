@@ -1,0 +1,63 @@
+name: Terraform infrastructure deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  plan:
+    name: Terraform plan
+    runs-on:
+      - ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+
+      - name: Setup terraform
+        uses:  hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform init
+        run: |
+          terraform init
+
+      - name: Terraform plan
+        run: |
+          terraform plan
+
+      - uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: uuthman
+          minimum-approvals: 1
+          issue-title: "Deploying infrastructures"
+          issue-body: "Review the terraform plan, then approve or deny the deployment"
+          exclude-workflow-initiator-as-approver: false
+
+
+      - name: Terraform apply
+        run: |
+          terraform apply -auto-approve -input=false
+
+      - name: Get load balancer dns name
+        id: get-lb-dns
+        run: |
+          echo "::set-output name=dns_name::$(terraform output -raw ecs_alb_dns_name)"
+
+      - name: Display dns name
+        run: |
+          echo "Load Balancer DNS Name: ${{ steps.get-lb-dns.outputs.dns_name }}"
