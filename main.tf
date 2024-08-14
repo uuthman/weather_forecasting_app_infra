@@ -1,3 +1,11 @@
+terraform {
+  backend "s3" {
+    bucket = "weather-app-state-folder"
+    key    = "weather-project"
+    region = "us-east-1"
+  }
+}
+
 provider "aws" {
 
 }
