@@ -49,11 +49,3 @@ jobs:
         run: |
           terraform apply -auto-approve -input=false
 
-      - name: Get load balancer dns name
-        id: get-lb-dns
-        run: |
-          echo "::set-output name=dns_name::$(terraform output -raw ecs_alb_dns_name)"
-
-      - name: Display dns name
-        run: |
-          echo "Load Balancer DNS Name: ${{ steps.get-lb-dns.outputs.dns_name }}"
